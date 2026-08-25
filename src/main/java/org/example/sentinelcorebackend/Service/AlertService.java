@@ -1,6 +1,5 @@
 package org.example.sentinelcorebackend.Service;
 
-
 import org.example.sentinelcorebackend.Dto.AlertDTO;
 import org.example.sentinelcorebackend.Entity.Alert;
 import org.example.sentinelcorebackend.Entity.Asset;
@@ -20,14 +19,25 @@ public class AlertService {
     private final AlertRepository alertRepository;
     private final AssetRepository assetRepository;
 
-    // Create a new alert
+    // Email notification service
+    private final NotificationService notificationService;
+
+    // Twilio SMS notification service
+    private final TwilioSmsService twilioSmsService;
+
+
+    // ============================================================
+    // CREATE A NEW ALERT
+    // ============================================================
     public AlertDTO createAlert(Long assetId, String severity, String message) {
 
+        // Find the asset
         Asset asset = assetRepository.findById(assetId)
                 .orElseThrow(() ->
                         new RuntimeException("Asset not found: " + assetId)
                 );
 
+        // Create alert
         Alert alert = Alert.builder()
                 .asset(asset)
                 .severity(Alert.AlertSeverity.valueOf(severity))
@@ -36,12 +46,48 @@ public class AlertService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
+        // Save alert to database
         Alert savedAlert = alertRepository.save(alert);
+
+
+        // ========================================================
+        // SEND NOTIFICATIONS FOR HIGH / CRITICAL ALERTS
+        // ========================================================
+        if (alert.getSeverity() == Alert.AlertSeverity.CRITICAL ||
+                alert.getSeverity() == Alert.AlertSeverity.HIGH) {
+
+            // ----------------------------------------------------
+            // 1. SEND EMAIL
+            // ----------------------------------------------------
+            notificationService.sendAlertEmail(
+                    "ramyaravin2006@gmail.com",
+                    asset.getAssetName(),
+                    alert.getSeverity().name(),
+                    alert.getMessage()
+            );
+
+
+            // ----------------------------------------------------
+            // 2. SEND SMS USING TWILIO
+            // ----------------------------------------------------
+            twilioSmsService.sendSms(
+                    "+917540067926",
+                    "SentinelCore Alert: "
+                            + alert.getSeverity().name()
+                            + " on "
+                            + asset.getAssetName()
+                            + ": "
+                            + alert.getMessage()
+            );
+        }
 
         return toDTO(savedAlert);
     }
 
-    // Resolve an alert
+
+    // ============================================================
+    // RESOLVE AN ALERT
+    // ============================================================
     public AlertDTO resolveAlert(Long alertId) {
 
         Alert alert = alertRepository.findById(alertId)
@@ -57,7 +103,10 @@ public class AlertService {
         return toDTO(resolvedAlert);
     }
 
-    // Get all open alerts
+
+    // ============================================================
+    // GET ALL OPEN ALERTS
+    // ============================================================
     public List<AlertDTO> getOpenAlerts() {
 
         return alertRepository
@@ -67,7 +116,10 @@ public class AlertService {
                 .collect(Collectors.toList());
     }
 
-    // Convert Alert Entity → AlertDTO
+
+    // ============================================================
+    // CONVERT ALERT ENTITY → ALERT DTO
+    // ============================================================
     private AlertDTO toDTO(Alert alert) {
 
         return AlertDTO.builder()

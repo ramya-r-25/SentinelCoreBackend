@@ -4,7 +4,9 @@ import org.example.sentinelcorebackend.Dto.AssetDTO;
 import org.example.sentinelcorebackend.Dto.DashboardSummaryDTO;
 import org.example.sentinelcorebackend.Entity.Asset;
 import org.example.sentinelcorebackend.Repository.AssetRepository;
+import org.example.sentinelcorebackend.Repository.AssetSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -108,12 +110,16 @@ public class AssetServiceImpl implements AssetService {
         long totalAssets = assets.size();
 
         double avgCpu = assets.stream()
+                .filter(asset -> asset.getCpuUsage() != null)
                 .mapToDouble(Asset::getCpuUsage)
                 .average()
-                .orElse(0);
+                .orElse(0.0);
 
         long criticalAlerts = assets.stream()
-                .filter(asset -> asset.getCpuUsage() >= 90)
+                .filter(asset ->
+                        asset.getCpuUsage() != null &&
+                                asset.getCpuUsage() >= 90
+                )
                 .count();
 
         double uptime = 99.90;
@@ -124,5 +130,21 @@ public class AssetServiceImpl implements AssetService {
                 avgCpu,
                 criticalAlerts
         );
+    }
+    @Override
+    public List<AssetDTO> searchAndFilter(
+            String search,
+            String status
+    ) {
+        Specification<Asset> specification =
+                AssetSpecification.searchAssets(
+                        search,
+                        status
+                );
+
+        return assetRepository.findAll(specification)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 }

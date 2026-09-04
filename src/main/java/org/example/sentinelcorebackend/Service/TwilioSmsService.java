@@ -19,18 +19,22 @@ public class TwilioSmsService {
     private String twilioPhoneNumber;
 
     public String sendSms(String to, String messageText) {
+        try {
+            Twilio.init(accountSid, authToken);
 
-        Twilio.init(accountSid, authToken);
+            Message message = Message.creator(
+                    new PhoneNumber(to),
+                    new PhoneNumber(twilioPhoneNumber),
+                    messageText
+            ).create();
 
-        Message message = Message.creator(
-                new PhoneNumber(to),
-                new PhoneNumber(twilioPhoneNumber),
-                "sms_internal_alerts"
-        ).create();
+            System.out.println("SentinelCore SMS sent successfully!");
+            System.out.println("Twilio Message SID: " + message.getSid());
 
-        System.out.println("SentinelCore SMS sent successfully!");
-        System.out.println("Twilio Message SID: " + message.getSid());
-
-        return message.getSid();
+            return message.getSid();
+        } catch (Exception e) {
+            System.err.println("Twilio SMS failed (e.g. Trial quota exceeded): " + e.getMessage());
+            return null;
+        }
     }
 }

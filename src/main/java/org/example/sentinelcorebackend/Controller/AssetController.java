@@ -1,9 +1,12 @@
 package org.example.sentinelcorebackend.Controller;
 
 import lombok.AllArgsConstructor;
+
 import org.example.sentinelcorebackend.Dto.AssetDTO;
 import org.example.sentinelcorebackend.Dto.DashboardSummaryDTO;
 import org.example.sentinelcorebackend.Service.AssetService;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,42 +19,114 @@ public class AssetController {
 
     private final AssetService assetService;
 
-    // Get all assets
+
+    // ==========================================
+    // GET ALL ASSETS
+    // ADMIN + OPERATOR + VIEWER
+    // ==========================================
+
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'VIEWER')")
     public List<AssetDTO> getAssets() {
+
         return assetService.getAllAssets();
     }
 
-    // Dashboard Summary
+
+    // ==========================================
+    // SEARCH AND FILTER ASSETS
+    // ADMIN + OPERATOR + VIEWER
+    // ==========================================
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'VIEWER')")
+    public List<AssetDTO> searchAssets(
+
+            @RequestParam(required = false)
+            String search,
+
+            @RequestParam(required = false)
+            String status
+
+    ) {
+
+        return assetService.searchAndFilter(
+                search,
+                status
+        );
+    }
+
+
+    // ==========================================
+    // DASHBOARD SUMMARY
+    // ADMIN + OPERATOR + VIEWER
+    // ==========================================
+
     @GetMapping("/dashboard/summary")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'VIEWER')")
     public DashboardSummaryDTO getDashboardSummary() {
+
         return assetService.getDashboardSummary();
     }
 
-    // Create Asset
+
+    // ==========================================
+    // CREATE ASSET
+    // ADMIN + OPERATOR
+    // ==========================================
+
     @PostMapping
-    public AssetDTO createAsset(@RequestBody AssetDTO dto) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR')")
+    public AssetDTO createAsset(
+            @RequestBody AssetDTO dto) {
+
         return assetService.createAsset(dto);
     }
 
-    // Get Asset by ID
+
+    // ==========================================
+    // GET ASSET BY ID
+    // ADMIN + OPERATOR + VIEWER
+    // ==========================================
+
     @GetMapping("/{id}")
-    public AssetDTO getAssetById(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'VIEWER')")
+    public AssetDTO getAssetById(
+            @PathVariable Long id) {
+
         return assetService.getById(id);
     }
 
-    // Update Asset
+
+    // ==========================================
+    // UPDATE ASSET
+    // ADMIN + OPERATOR
+    // ==========================================
+
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR')")
     public AssetDTO updateAsset(
+
             @PathVariable Long id,
+
             @RequestBody AssetDTO dto) {
 
-        return assetService.updateAsset(id, dto);
+        return assetService.updateAsset(
+                id,
+                dto
+        );
     }
 
-    // Delete Asset
+
+    // ==========================================
+    // DELETE ASSET
+    // ADMIN ONLY
+    // ==========================================
+
     @DeleteMapping("/{id}")
-    public String deleteAsset(@PathVariable Long id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public String deleteAsset(
+            @PathVariable Long id) {
 
         assetService.deleteAsset(id);
 

@@ -28,4 +28,30 @@ public class NotificationService {
 
         mailSender.send(mail);
     }
+
+    public void sendAlertResolvedEmail(
+            String toEmail,
+            String assetName,
+            String severity,
+            String message) {
+
+        try {
+            SimpleMailMessage mail = new SimpleMailMessage();
+
+            mail.setTo(toEmail);
+            mail.setSubject(
+                    "[SentinelCore] RESOLVED: " + severity + " Alert on " + assetName
+            );
+
+            mail.setText("The following alert has been RESOLVED:\n\n"
+                    + "Asset: " + assetName + "\n"
+                    + "Severity: " + severity + "\n"
+                    + "Message: " + message);
+
+            mailSender.send(mail);
+            System.out.println("=== SENTINELCORE RESOLVED ALERT EMAIL SENT SUCCESSFULLY TO: " + toEmail + " ===");
+        } catch (Exception e) {
+            System.err.println("Failed to send resolved alert email: " + e.getMessage());
+        }
+    }
 }

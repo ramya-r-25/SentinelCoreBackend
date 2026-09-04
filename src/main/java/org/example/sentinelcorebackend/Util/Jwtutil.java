@@ -13,12 +13,21 @@ import java.util.Date;
 @Component
 public class Jwtutil {
 
+    // ==========================================
+    // SECRET KEY
+    // ==========================================
+
     private final SecretKey key =
             Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
+
+    // ==========================================
+    // TOKEN EXPIRATION
+    // ==========================================
+
     // Access token - 15 minutes
     private final long ACCESS_TOKEN_EXPIRATION =
-            1000 * 60 * 15;
+            1000L * 60 * 15;
 
     // Refresh token - 7 days
     private final long REFRESH_TOKEN_EXPIRATION =
@@ -26,7 +35,7 @@ public class Jwtutil {
 
 
     // ==========================================
-    // ACCESS TOKEN
+    // GENERATE ACCESS TOKEN
     // ==========================================
 
     public String generateToken(
@@ -34,10 +43,9 @@ public class Jwtutil {
             String role) {
 
         return Jwts.builder()
-
                 .setSubject(username)
 
-                // Store role inside JWT
+                // Store user's role in JWT
                 .claim("role", role)
 
                 .setIssuedAt(new Date())
@@ -56,14 +64,13 @@ public class Jwtutil {
 
 
     // ==========================================
-    // REFRESH TOKEN
+    // GENERATE REFRESH TOKEN
     // ==========================================
 
     public String generateRefreshToken(
             String username) {
 
         return Jwts.builder()
-
                 .setSubject(username)
 
                 .setIssuedAt(new Date())
@@ -89,15 +96,10 @@ public class Jwtutil {
             String token) {
 
         return Jwts.parserBuilder()
-
                 .setSigningKey(key)
-
                 .build()
-
                 .parseClaimsJws(token)
-
                 .getBody()
-
                 .getSubject();
     }
 
@@ -110,15 +112,10 @@ public class Jwtutil {
             String token) {
 
         return Jwts.parserBuilder()
-
                 .setSigningKey(key)
-
                 .build()
-
                 .parseClaimsJws(token)
-
                 .getBody()
-
                 .get("role", String.class);
     }
 
@@ -133,11 +130,8 @@ public class Jwtutil {
         try {
 
             Jwts.parserBuilder()
-
                     .setSigningKey(key)
-
                     .build()
-
                     .parseClaimsJws(token);
 
             return true;

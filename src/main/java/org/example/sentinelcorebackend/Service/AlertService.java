@@ -89,6 +89,7 @@ public class AlertService {
     // RESOLVE AN ALERT
     // ============================================================
     public AlertDTO resolveAlert(Long alertId) {
+        System.out.println("=== RESOLVING ALERT ID: " + alertId + " ===");
 
         Alert alert = alertRepository.findById(alertId)
                 .orElseThrow(() ->
@@ -99,6 +100,14 @@ public class AlertService {
         alert.setResolvedAt(LocalDateTime.now());
 
         Alert resolvedAlert = alertRepository.save(alert);
+
+        // Send email notification on resolution
+        notificationService.sendAlertResolvedEmail(
+                "ramyaravin2006@gmail.com",
+                resolvedAlert.getAsset() != null ? resolvedAlert.getAsset().getAssetName() : "Unknown Asset",
+                resolvedAlert.getSeverity() != null ? resolvedAlert.getSeverity().name() : "INFO",
+                resolvedAlert.getMessage()
+        );
 
         return toDTO(resolvedAlert);
     }

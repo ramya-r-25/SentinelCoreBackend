@@ -18,4 +18,6 @@ public interface AssetService {
     void deleteAsset(Long id);
 
     DashboardSummaryDTO getDashboardSummary();
+
+    List<AssetDTO> searchAndFilter(String search, String status);
 }

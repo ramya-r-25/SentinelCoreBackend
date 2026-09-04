@@ -21,6 +21,11 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+
+    // ==========================================
+    // LOGIN
+    // ==========================================
+
     @PostMapping("/login")
     public Map<String, String> login(
             @RequestBody Map<String, String> credentials) {
@@ -28,7 +33,7 @@ public class AuthController {
         String username = credentials.get("username");
         String password = credentials.get("password");
 
-        // Find user
+        // Find user from database
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() ->
                         new RuntimeException("Invalid credentials")
@@ -42,12 +47,15 @@ public class AuthController {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // Get role
+        // Get user role
         String role = user.getRoles()
                 .stream()
                 .findFirst()
                 .map(r -> r.getName())
                 .orElse("ROLE_VIEWER");
+
+        System.out.println("LOGIN USER: " + username);
+        System.out.println("LOGIN ROLE: " + role);
 
         // Generate access token
         String accessToken =
@@ -63,6 +71,54 @@ public class AuthController {
         return Map.of(
                 "accessToken", accessToken,
                 "refreshToken", refreshToken
+        );
+    }
+
+
+    // ==========================================
+    // REFRESH TOKEN
+    // ==========================================
+
+    @PostMapping("/refresh")
+    public Map<String, String> refresh(
+            @RequestBody Map<String, String> body) {
+
+        String refreshToken = body.get("refreshToken");
+
+        // Validate refresh token
+        if (!jwtUtil.isTokenValid(refreshToken)) {
+            throw new RuntimeException(
+                    "Invalid or expired refresh token"
+            );
+        }
+
+        // Extract username
+        String username =
+                jwtUtil.extractUsername(refreshToken);
+
+        // Find user
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        // Get current role
+        String role = user.getRoles()
+                .stream()
+                .findFirst()
+                .map(r -> r.getName())
+                .orElse("ROLE_VIEWER");
+
+        // Generate new access token
+        String newAccessToken =
+                jwtUtil.generateToken(
+                        username,
+                        role
+                );
+
+        return Map.of(
+                "accessToken",
+                newAccessToken
         );
     }
 }
